@@ -1,4 +1,6 @@
 <img width="1459" height="804" alt="image" src="https://github.com/user-attachments/assets/bfc4b4c4-2db9-4619-9eab-d2df55375873" />
+<img width="1470" height="796" alt="image" src="https://github.com/user-attachments/assets/2d6d5fd8-4edb-4e6d-b402-9038c510d696" />
+<img width="1470" height="800" alt="image" src="https://github.com/user-attachments/assets/5eaacaa0-671e-4d95-8044-ecc1214bd525" />
 
 
 # AutoPlan
