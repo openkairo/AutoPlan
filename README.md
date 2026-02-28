@@ -1,4 +1,5 @@
-<img width="1316" height="732" alt="AutoPlan Screenshot" src="https://github.com/user-attachments/assets/461b0144-73a4-4e84-8053-8f3e4a3e836a" />
+<img width="1459" height="804" alt="image" src="https://github.com/user-attachments/assets/bfc4b4c4-2db9-4619-9eab-d2df55375873" />
+
 
 # AutoPlan
 
