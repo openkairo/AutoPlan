@@ -225,5 +225,49 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/lexoffice/invoices", async (req, res) => {
+    const apiKey = process.env.LEXOFFICE_API_KEY;
+    if (!apiKey) {
+      return res.status(400).json({ error: "Lexoffice API-Key nicht konfiguriert." });
+    }
+
+    const contactId = req.query.contactId as string;
+    if (!contactId) {
+      return res.status(400).json({ error: "contactId ist erforderlich." });
+    }
+
+    const params = new URLSearchParams({
+      voucherType: "invoice,salesinvoice,downpaymentinvoice",
+      voucherStatus: "draft,open,paid,paidoff,voided,overdue",
+      contactId,
+      size: "25",
+      sortDirection: "DESC",
+      sortColumn: "voucherDate",
+    });
+
+    try {
+      const response = await fetch(
+        `https://api.lexoffice.io/v1/voucherlist?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        return res.status(response.status).json({
+          error: `Lexoffice API Fehler: ${response.status}`,
+        });
+      }
+
+      const data = await response.json();
+      res.json(data);
+    } catch (err) {
+      res.status(502).json({ error: "Konnte Lexoffice nicht erreichen." });
+    }
+  });
+
   return httpServer;
 }

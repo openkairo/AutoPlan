@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Loader2, Camera, Search, BookUser } from "lucide-react";
+import { Plus, Loader2, Camera, Search, BookUser, FileText, ExternalLink } from "lucide-react";
 import { useStops } from "@/hooks/use-deliveries";
 import { useToast } from "@/hooks/use-toast";
 import { AddressAutocomplete } from "./AddressAutocomplete";
@@ -52,6 +52,15 @@ function extractContacts(data: any): LexofficeContact[] {
   });
 }
 
+interface LexofficeInvoice {
+  id: string;
+  voucherNumber: string;
+  voucherDate: string;
+  totalAmount: number;
+  voucherStatus: string;
+  voucherType: string;
+}
+
 interface AddStopDialogProps {
   deliveryDate: Date;
 }
@@ -79,6 +88,9 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
   const lexRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const [hasLexofficeKey, setHasLexofficeKey] = useState(false);
+  const [invoices, setInvoices] = useState<LexofficeInvoice[]>([]);
+  const [invoicesLoading, setInvoicesLoading] = useState(false);
+  const [selectedContactName, setSelectedContactName] = useState("");
 
   useEffect(() => {
     loadKeysStatus().then((status) => setHasLexofficeKey(status.lexoffice));
@@ -132,8 +144,26 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const fetchInvoices = useCallback(async (contactId: string) => {
+    setInvoicesLoading(true);
+    try {
+      const res = await fetch(`/api/lexoffice/invoices?contactId=${encodeURIComponent(contactId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setInvoices(data.content || []);
+      } else {
+        setInvoices([]);
+      }
+    } catch {
+      setInvoices([]);
+    } finally {
+      setInvoicesLoading(false);
+    }
+  }, []);
+
   const selectContact = (contact: LexofficeContact) => {
     setName(contact.displayName);
+    setSelectedContactName(contact.displayName);
     if (contact.phone) setPhone(contact.phone);
     if (contact.address) {
       setAddress(contact.address);
@@ -151,6 +181,7 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
     setLexQuery("");
     setLexDropdownOpen(false);
     setLexResults([]);
+    fetchInvoices(contact.id);
   };
 
   const handleScanComplete = (result: { name?: string; address?: string; phone?: string }) => {
@@ -202,6 +233,8 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
       setStreetNumber("");
       setLexQuery("");
       setLexResults([]);
+      setInvoices([]);
+      setSelectedContactName("");
       
       toast({
         title: "Stopp hinzugefügt",
@@ -280,6 +313,63 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {invoicesLoading && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Rechnungen werden geladen...
+            </div>
+          )}
+
+          {!invoicesLoading && invoices.length > 0 && (
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <Label className="flex items-center gap-1.5 mb-2">
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                Rechnungen ({invoices.length})
+              </Label>
+              <div className="max-h-36 overflow-y-auto space-y-1">
+                {invoices.map((inv) => {
+                  const date = inv.voucherDate
+                    ? new Date(inv.voucherDate).toLocaleDateString("de-DE")
+                    : "";
+                  const statusMap: Record<string, { label: string; className: string }> = {
+                    draft: { label: "Entwurf", className: "bg-muted text-muted-foreground" },
+                    open: { label: "Offen", className: "bg-yellow-500/20 text-yellow-400" },
+                    paid: { label: "Bezahlt", className: "bg-green-500/20 text-green-400" },
+                    paidoff: { label: "Bezahlt", className: "bg-green-500/20 text-green-400" },
+                    voided: { label: "Storniert", className: "bg-red-500/20 text-red-400" },
+                    overdue: { label: "Überfällig", className: "bg-red-500/20 text-red-400" },
+                  };
+                  const status = statusMap[inv.voucherStatus] || { label: inv.voucherStatus, className: "bg-muted text-muted-foreground" };
+                  return (
+                    <a
+                      key={inv.id}
+                      href={`https://app.lexoffice.de/permalink/invoices/view/${inv.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid={`invoice-${inv.id}`}
+                      className="flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-accent transition-colors group"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm font-medium truncate">{inv.voucherNumber || "—"}</span>
+                        <span className="text-xs text-muted-foreground">{date}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-sm font-medium">
+                          {inv.totalAmount != null ? `${inv.totalAmount.toFixed(2)} €` : ""}
+                        </span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${status.className}`}>
+                          {status.label}
+                        </span>
+                        <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
             </div>
           )}
 
