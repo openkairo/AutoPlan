@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "r2n-Lzs6bA8IbjBKaorhS"
+uri = "file://LEXOFFICE_INTEGRATION.md"
+type = "text"
+title = "Lexoffice Integration – Technische Dokumentation"
