@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Loader2, Camera, Search, BookUser, FileText, ExternalLink } from "lucide-react";
@@ -435,16 +434,39 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="payment">Zahlungsart</Label>
-              <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as "paid" | "cod")}>
-                <SelectTrigger data-testid="select-payment">
-                  <SelectValue placeholder="Zahlungsart wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paid">Bereits bezahlt</SelectItem>
-                  <SelectItem value="cod">Barzahlung bei Lieferung</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Zahlungsart</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  data-testid="button-payment-paid"
+                  onClick={() => setPaymentMethod("paid")}
+                  className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    paymentMethod === "paid"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  }`}
+                >
+                  <span className={`h-4 w-4 rounded-sm border-2 flex items-center justify-center flex-shrink-0 ${paymentMethod === "paid" ? "border-primary bg-primary" : "border-muted-foreground"}`}>
+                    {paymentMethod === "paid" && <svg viewBox="0 0 10 8" className="h-2.5 w-2.5 fill-none stroke-white stroke-2"><polyline points="1,4 4,7 9,1"/></svg>}
+                  </span>
+                  Bereits bezahlt
+                </button>
+                <button
+                  type="button"
+                  data-testid="button-payment-cod"
+                  onClick={() => setPaymentMethod("cod")}
+                  className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    paymentMethod === "cod"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  }`}
+                >
+                  <span className={`h-4 w-4 rounded-sm border-2 flex items-center justify-center flex-shrink-0 ${paymentMethod === "cod" ? "border-primary bg-primary" : "border-muted-foreground"}`}>
+                    {paymentMethod === "cod" && <svg viewBox="0 0 10 8" className="h-2.5 w-2.5 fill-none stroke-white stroke-2"><polyline points="1,4 4,7 9,1"/></svg>}
+                  </span>
+                  Barzahlung
+                </button>
+              </div>
             </div>
             <DialogFooter>
               <Button type="submit" data-testid="button-submit-stop" disabled={loading} className="w-full">
