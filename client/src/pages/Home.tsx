@@ -36,6 +36,7 @@ interface RouteInfo {
   totalDistanceKm: number;
   totalDurationMin: number;
   legs: { from: string; to: string; distanceKm: number; durationMin: number }[];
+  overviewPolyline?: string;
 }
 
 export default function Home() {
@@ -140,6 +141,7 @@ export default function Home() {
         totalDistanceKm: Math.round(totalDistanceM / 100) / 10,
         totalDurationMin: Math.round(totalDurationS / 60),
         legs: legDetails,
+        overviewPolyline: route.overview_polyline ?? undefined,
       });
     } catch (error) {
       console.error("Route calculation failed:", error);
@@ -278,11 +280,36 @@ export default function Home() {
     window.open('https://web.whatsapp.com/', '_blank');
   };
 
-  const printDeliveryList = useCallback(() => {
+  const printDeliveryList = useCallback(async () => {
     if (stops.length === 0) return;
     const { startAddress } = getSettings();
     const date = format(globalDeliveryDate, 'EEEE, dd. MMMM yyyy', { locale: de });
     const now = format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de });
+
+    let mapsKey = "";
+    try {
+      const res = await fetch("/api/maps-key");
+      const data = await res.json();
+      mapsKey = data.key ?? "";
+    } catch {}
+
+    let mapImageHtml = "";
+    if (mapsKey && stops.length > 0) {
+      const markerLabels = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const markerParams = stops
+        .filter(s => s.lat && s.lng)
+        .map((s, idx) => `markers=color:red%7Clabel:${markerLabels[idx] ?? idx + 1}%7C${s.lat},${s.lng}`)
+        .join("&");
+
+      let pathParam = "";
+      if (routeInfo?.overviewPolyline) {
+        const encoded = encodeURIComponent(routeInfo.overviewPolyline);
+        pathParam = `&path=color:0x22c55eff%7Cweight:4%7Cenc:${encoded}`;
+      }
+
+      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=800x350&maptype=roadmap&${markerParams}${pathParam}&key=${mapsKey}`;
+      mapImageHtml = `<img src="${staticMapUrl}" alt="Routenkarte" class="map-img" />`;
+    }
 
     let routeInfoHtml = "";
     if (routeInfo) {
@@ -343,10 +370,12 @@ export default function Home() {
     .badge-paid { background: #e6f9ee; color: #166534; border-color: #bbf7d0; }
     .badge-cod { background: #fef9c3; color: #854d0e; border-color: #fde68a; }
     .notes { font-size: 12px; color: #555; }
+    .map-img { width: 100%; max-height: 350px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 14px; display: block; }
     .footer { margin-top: 16px; font-size: 11px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
     @media print {
       body { padding: 10mm; }
       .stop { break-inside: avoid; }
+      .map-img { break-inside: avoid; max-height: 300px; }
     }
   </style>
 </head>
@@ -354,6 +383,7 @@ export default function Home() {
   <h1>&#128230; Lieferliste</h1>
   <div class="subtitle">${date}${startAddress ? ' &nbsp;|&nbsp; Start: ' + startAddress : ''}</div>
   ${routeInfoHtml}
+  ${mapImageHtml}
   ${stopsHtml}
   <div class="footer">Erstellt am ${now} &nbsp;|&nbsp; AutoPlan</div>
   <script>window.onload = function() { window.print(); }<\/script>
