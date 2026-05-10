@@ -386,7 +386,15 @@ export default function Home() {
   ${mapImageHtml}
   ${stopsHtml}
   <div class="footer">Erstellt am ${now} &nbsp;|&nbsp; AutoPlan</div>
-  <script>window.onload = function() { window.print(); }<\/script>
+  <script>
+    var mapImg = document.querySelector('.map-img');
+    if (mapImg) {
+      mapImg.onload = function() { window.print(); };
+      mapImg.onerror = function() { this.style.display='none'; window.print(); };
+    } else {
+      window.onload = function() { window.print(); };
+    }
+  <\/script>
 </body>
 </html>`;
 
