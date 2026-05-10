@@ -260,7 +260,7 @@ export default function Home() {
     const baseUrl = "https://www.google.com/maps/dir/?api=1";
     const origin = encodeURIComponent(startAddress);
     const destination = encodeURIComponent(startAddress);
-    const waypoints = stops.map(s => encodeURIComponent(s.address)).join('|');
+    const waypoints = stops.map(s => s.lat && s.lng ? `${s.lat},${s.lng}` : encodeURIComponent(s.address)).join('|');
     
     const mapUrl = `${baseUrl}&origin=${origin}&destination=${destination}&waypoints=${waypoints}`;
     
