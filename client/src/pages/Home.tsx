@@ -296,18 +296,24 @@ export default function Home() {
     let mapImageHtml = "";
     if (mapsKey && stops.length > 0) {
       const markerLabels = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      const markerParams = stops
-        .filter(s => s.lat && s.lng)
-        .map((s, idx) => `markers=color:red%7Clabel:${markerLabels[idx] ?? idx + 1}%7C${s.lat},${s.lng}`)
-        .join("&");
+      const markerParts = stops.map((s, idx) => {
+        const label = markerLabels[idx] ?? String(idx + 1);
+        const location = (s.lat && s.lng) ? `${s.lat},${s.lng}` : encodeURIComponent(s.address);
+        return `markers=color:red%7Clabel:${label}%7C${location}`;
+      });
 
-      let pathParam = "";
+      const urlParts: string[] = [`size=800x350`, `maptype=roadmap`, ...markerParts];
+
       if (routeInfo?.overviewPolyline) {
-        const encoded = encodeURIComponent(routeInfo.overviewPolyline);
-        pathParam = `&path=color:0x22c55eff%7Cweight:4%7Cenc:${encoded}`;
+        const poly = routeInfo.overviewPolyline
+          .replace(/%/g, '%25')
+          .replace(/&/g, '%26')
+          .replace(/\+/g, '%2B');
+        urlParts.push(`path=color:0x22c55eff%7Cweight:4%7Cenc:${poly}`);
       }
 
-      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=800x350&maptype=roadmap&${markerParams}${pathParam}&key=${mapsKey}`;
+      urlParts.push(`key=${mapsKey}`);
+      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?${urlParts.join("&")}`;
       mapImageHtml = `<img src="${staticMapUrl}" alt="Routenkarte" class="map-img" />`;
     }
 
