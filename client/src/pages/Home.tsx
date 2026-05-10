@@ -286,34 +286,24 @@ export default function Home() {
     const date = format(globalDeliveryDate, 'EEEE, dd. MMMM yyyy', { locale: de });
     const now = format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de });
 
-    let mapsKey = "";
-    try {
-      const res = await fetch("/api/maps-key");
-      const data = await res.json();
-      mapsKey = data.key ?? "";
-    } catch {}
-
     let mapImageHtml = "";
-    if (mapsKey && stops.length > 0) {
+    if (stops.length > 0) {
       const markerLabels = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      const markerParts = stops.map((s, idx) => {
+      const params = new URLSearchParams();
+      params.set("size", "800x350");
+      params.set("maptype", "roadmap");
+
+      stops.forEach((s, idx) => {
         const label = markerLabels[idx] ?? String(idx + 1);
-        const location = (s.lat && s.lng) ? `${s.lat},${s.lng}` : encodeURIComponent(s.address);
-        return `markers=color:red%7Clabel:${label}%7C${location}`;
+        const location = (s.lat && s.lng) ? `${s.lat},${s.lng}` : s.address;
+        params.append("markers", `color:red|label:${label}|${location}`);
       });
 
-      const urlParts: string[] = [`size=800x350`, `maptype=roadmap`, ...markerParts];
-
       if (routeInfo?.overviewPolyline) {
-        const poly = routeInfo.overviewPolyline
-          .replace(/%/g, '%25')
-          .replace(/&/g, '%26')
-          .replace(/\+/g, '%2B');
-        urlParts.push(`path=color:0x22c55eff%7Cweight:4%7Cenc:${poly}`);
+        params.append("path", `color:0x22c55eff|weight:4|enc:${routeInfo.overviewPolyline}`);
       }
 
-      urlParts.push(`key=${mapsKey}`);
-      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?${urlParts.join("&")}`;
+      const staticMapUrl = `/api/static-map?${params.toString()}`;
       mapImageHtml = `<img src="${staticMapUrl}" alt="Routenkarte" class="map-img" />`;
     }
 

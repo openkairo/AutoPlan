@@ -83,6 +83,25 @@ export async function registerRoutes(
     res.json({ key });
   });
 
+  app.get("/api/static-map", async (req, res) => {
+    const key = process.env.GOOGLE_MAPS_API_KEY;
+    if (!key) {
+      return res.status(404).json({ error: "Google Maps API-Key nicht konfiguriert." });
+    }
+    const params = new URLSearchParams(req.query as Record<string, string>);
+    params.set("key", key);
+    const url = `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
+    try {
+      const response = await fetch(url);
+      res.setHeader("Content-Type", response.headers.get("content-type") || "image/png");
+      res.setHeader("Cache-Control", "public, max-age=300");
+      const buffer = await response.arrayBuffer();
+      res.send(Buffer.from(buffer));
+    } catch (err) {
+      res.status(500).json({ error: "Kartenabruf fehlgeschlagen." });
+    }
+  });
+
   app.post("/api/scan-document", async (req, res) => {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
