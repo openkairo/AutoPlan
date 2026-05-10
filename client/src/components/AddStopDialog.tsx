@@ -380,7 +380,6 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
                 data-testid="input-stop-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Max Mustermann"
                 required
               />
             </div>
@@ -392,7 +391,6 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="+49 170 1234567"
               />
             </div>
             <div className="grid gap-2">
@@ -408,7 +406,6 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
                       setLat(newLat);
                       setLng(newLng);
                     }}
-                    placeholder="Straße, Stadt, PLZ"
                     required
                   />
                 </div>
@@ -417,7 +414,6 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
                   data-testid="input-stop-street-number"
                   value={streetNumber}
                   onChange={(e) => setStreetNumber(e.target.value)}
-                  placeholder="Nr."
                   className="w-20"
                 />
               </div>
@@ -429,7 +425,6 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
                 data-testid="input-stop-notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="z.B. Hintereingang, Klingel defekt..."
                 rows={2}
               />
             </div>
