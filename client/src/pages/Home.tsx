@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Calendar as CalendarIcon, RotateCw, Navigation, MessageCircle, Truck, Loader2, Route, Clock, MapPin, Send, Copy, Check } from "lucide-react";
+import { Calendar as CalendarIcon, RotateCw, Navigation, MessageCircle, Truck, Loader2, Route, Clock, MapPin, Send, Copy, Check, Printer } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -278,6 +278,95 @@ export default function Home() {
     window.open('https://web.whatsapp.com/', '_blank');
   };
 
+  const printDeliveryList = useCallback(() => {
+    if (stops.length === 0) return;
+    const { startAddress } = getSettings();
+    const date = format(globalDeliveryDate, 'EEEE, dd. MMMM yyyy', { locale: de });
+    const now = format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de });
+
+    let routeInfoHtml = "";
+    if (routeInfo) {
+      const durationText = routeInfo.totalDurationMin >= 60
+        ? `${Math.floor(routeInfo.totalDurationMin / 60)} Std ${routeInfo.totalDurationMin % 60} Min`
+        : `${routeInfo.totalDurationMin} Min`;
+      routeInfoHtml = `
+        <div class="route-info">
+          <span>&#128338; Fahrzeit: <strong>${durationText}</strong></span>
+          <span>&#128205; Gesamtstrecke: <strong>${routeInfo.totalDistanceKm} km</strong></span>
+          <span>&#128230; Stopps: <strong>${stops.length}</strong></span>
+        </div>`;
+    }
+
+    const stopsHtml = stops.map((stop, idx) => {
+      const paymentLabel = stop.paymentMethod === 'paid' ? 'Bereits bezahlt' : 'Barzahlung';
+      const paymentClass = stop.paymentMethod === 'paid' ? 'badge-paid' : 'badge-cod';
+      const notesHtml = stop.notes ? `<div class="notes">&#128221; ${stop.notes}</div>` : '';
+      const phoneHtml = stop.phone ? `<div class="detail">&#128222; ${stop.phone}</div>` : '';
+      return `
+        <div class="stop">
+          <div class="stop-header">
+            <div class="stop-number">${idx + 1}</div>
+            <div class="stop-name">${stop.name}</div>
+            <div class="checkbox">&#9744;</div>
+          </div>
+          <div class="stop-body">
+            <div class="detail">&#128205; ${stop.address}</div>
+            ${phoneHtml}
+            <div class="stop-footer">
+              <span class="badge ${paymentClass}">${paymentLabel}</span>
+              ${notesHtml}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Lieferliste – ${date}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #111; background: #fff; padding: 20px; }
+    h1 { font-size: 20px; font-weight: bold; margin-bottom: 2px; }
+    .subtitle { font-size: 13px; color: #555; margin-bottom: 10px; }
+    .route-info { display: flex; gap: 24px; background: #f4f4f4; border-radius: 6px; padding: 8px 12px; margin-bottom: 14px; font-size: 13px; }
+    .stop { border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px; overflow: hidden; page-break-inside: avoid; }
+    .stop-header { display: flex; align-items: center; gap: 10px; background: #f0f0f0; padding: 8px 12px; border-bottom: 1px solid #ccc; }
+    .stop-number { width: 26px; height: 26px; border-radius: 50%; background: #222; color: #fff; font-weight: bold; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .stop-name { font-weight: bold; font-size: 15px; flex: 1; }
+    .checkbox { font-size: 28px; color: #333; flex-shrink: 0; line-height: 1; }
+    .stop-body { padding: 8px 12px; }
+    .detail { margin: 3px 0; color: #333; }
+    .stop-footer { margin-top: 6px; display: flex; align-items: center; gap: 10px; }
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: bold; border: 1px solid; }
+    .badge-paid { background: #e6f9ee; color: #166534; border-color: #bbf7d0; }
+    .badge-cod { background: #fef9c3; color: #854d0e; border-color: #fde68a; }
+    .notes { font-size: 12px; color: #555; }
+    .footer { margin-top: 16px; font-size: 11px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
+    @media print {
+      body { padding: 10mm; }
+      .stop { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <h1>&#128230; Lieferliste</h1>
+  <div class="subtitle">${date}${startAddress ? ' &nbsp;|&nbsp; Start: ' + startAddress : ''}</div>
+  ${routeInfoHtml}
+  ${stopsHtml}
+  <div class="footer">Erstellt am ${now} &nbsp;|&nbsp; AutoPlan</div>
+  <script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  }, [stops, globalDeliveryDate, routeInfo, getSettings]);
+
   const copyMessage = async () => {
     const message = buildWhatsAppMessage();
     if (!message) return;
@@ -323,6 +412,16 @@ export default function Home() {
 
             <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
                <SettingsDialog />
+               <Button
+                 data-testid="button-print"
+                 onClick={printDeliveryList}
+                 disabled={stops.length === 0}
+                 variant="outline"
+                 className="gap-2 border-border text-foreground"
+               >
+                 <Printer className="h-4 w-4" />
+                 <span className="hidden sm:inline">Drucken</span>
+               </Button>
                <Button 
                  data-testid="button-whatsapp"
                  onClick={() => { setCopied(false); setWhatsappPreviewOpen(true); }}
