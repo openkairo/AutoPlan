@@ -88,16 +88,21 @@ export async function registerRoutes(
     if (!key) {
       return res.status(404).json({ error: "Google Maps API-Key nicht konfiguriert." });
     }
-    const params = new URLSearchParams(req.query as Record<string, string>);
-    params.set("key", key);
-    const url = `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
+    const rawQuery = req.url.split("?")[1] || "";
+    const url = `https://maps.googleapis.com/maps/api/staticmap?${rawQuery}&key=${encodeURIComponent(key)}`;
     try {
       const response = await fetch(url);
-      res.setHeader("Content-Type", response.headers.get("content-type") || "image/png");
+      const contentType = response.headers.get("content-type") || "image/png";
+      res.setHeader("Content-Type", contentType);
       res.setHeader("Cache-Control", "public, max-age=300");
       const buffer = await response.arrayBuffer();
+      if (!response.ok) {
+        console.error(`[static-map] Google API error ${response.status}: ${Buffer.from(buffer).toString("utf8").slice(0, 200)}`);
+        return res.status(502).send(Buffer.from(buffer));
+      }
       res.send(Buffer.from(buffer));
     } catch (err) {
+      console.error("[static-map] fetch failed:", err);
       res.status(500).json({ error: "Kartenabruf fehlgeschlagen." });
     }
   });
