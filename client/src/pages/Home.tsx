@@ -16,6 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import QRCode from "qrcode";
 import { Calendar as CalendarIcon, RotateCw, Navigation, MessageCircle, Truck, Loader2, Route, Clock, MapPin, Send, Copy, Check, Printer } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -262,7 +263,7 @@ export default function Home() {
     const baseUrl = "https://www.google.com/maps/dir/?api=1";
     const origin = encodeURIComponent(startAddress);
     const destination = encodeURIComponent(startAddress);
-    const waypoints = stops.map(s => s.lat && s.lng ? `${s.lat},${s.lng}` : encodeURIComponent(s.address)).join('|');
+    const waypoints = stops.map(s => encodeURIComponent(s.address)).join('|');
     
     const mapUrl = `${baseUrl}&origin=${origin}&destination=${destination}&waypoints=${waypoints}`;
     
@@ -285,6 +286,18 @@ export default function Home() {
     const { startAddress } = getSettings();
     const date = format(globalDeliveryDate, 'EEEE, dd. MMMM yyyy', { locale: de });
     const now = format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de });
+
+    const routeBaseUrl = "https://www.google.com/maps/dir/?api=1";
+    const routeOrigin = encodeURIComponent(startAddress);
+    const routeDestination = encodeURIComponent(startAddress);
+    const routeWaypoints = stops.map(s => encodeURIComponent(s.address)).join('|');
+    const routeUrl = `${routeBaseUrl}&origin=${routeOrigin}&destination=${routeDestination}&waypoints=${routeWaypoints}`;
+    const qrUrl = await QRCode.toDataURL(routeUrl, { width: 220, margin: 2 });
+    const qrHtml = `
+      <div class="qr-box">
+        <img src="${qrUrl}" alt="Route QR-Code" class="qr-img" />
+        <div class="qr-label">&#128241; Route scannen</div>
+      </div>`;
 
     let mapImageHtml = "";
     if (stops.length > 0) {
@@ -367,6 +380,10 @@ export default function Home() {
     .badge-cod { background: #fef9c3; color: #854d0e; border-color: #fde68a; }
     .notes { font-size: 12px; color: #555; }
     .map-img { width: 100%; max-height: 350px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 14px; display: block; }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 12px; }
+    .qr-box { flex-shrink: 0; text-align: center; border: 1px solid #ccc; border-radius: 6px; padding: 8px; }
+    .qr-img { width: 110px; height: 110px; display: block; }
+    .qr-label { font-size: 11px; font-weight: bold; color: #333; margin-top: 4px; }
     .footer { margin-top: 16px; font-size: 11px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
     @media print {
       body { padding: 10mm; }
@@ -376,19 +393,31 @@ export default function Home() {
   </style>
 </head>
 <body>
-  <h1>&#128230; Lieferliste</h1>
-  <div class="subtitle">${date}${startAddress ? ' &nbsp;|&nbsp; Start: ' + startAddress : ''}</div>
+  <div class="header-row">
+    <div>
+      <h1>&#128230; Lieferliste</h1>
+      <div class="subtitle">${date}${startAddress ? ' &nbsp;|&nbsp; Start: ' + startAddress : ''}</div>
+    </div>
+    ${qrHtml}
+  </div>
   ${routeInfoHtml}
   ${mapImageHtml}
   ${stopsHtml}
   <div class="footer">Erstellt am ${now} &nbsp;|&nbsp; AutoPlan</div>
   <script>
-    var mapImg = document.querySelector('.map-img');
-    if (mapImg) {
-      mapImg.onload = function() { window.print(); };
-      mapImg.onerror = function() { this.style.display='none'; window.print(); };
+    var imgs = Array.prototype.slice.call(document.images);
+    var pending = imgs.length;
+    function done() { pending--; if (pending <= 0) window.print(); }
+    if (pending === 0) {
+      window.print();
     } else {
-      window.onload = function() { window.print(); };
+      imgs.forEach(function(img) {
+        if (img.complete) { done(); }
+        else {
+          img.onload = done;
+          img.onerror = function() { this.style.display = 'none'; done(); };
+        }
+      });
     }
   <\/script>
 </body>
