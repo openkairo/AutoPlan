@@ -8,6 +8,8 @@ export interface Stop {
   lat: number | null;
   lng: number | null;
   notes: string | null;
+  solarModule: string | null;
+  solarQuantity: number | null;
   completed: boolean;
   sortOrder: number;
 }

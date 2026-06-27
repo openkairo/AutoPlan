@@ -79,6 +79,8 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
   const [lng, setLng] = useState<number | undefined>();
   const [paymentMethod, setPaymentMethod] = useState<"paid" | "cod">("paid");
   const [notes, setNotes] = useState("");
+  const [solarModule, setSolarModule] = useState<"aiko" | "joly" | "">("");
+  const [solarQuantity, setSolarQuantity] = useState("");
 
   const [lexQuery, setLexQuery] = useState("");
   const [lexResults, setLexResults] = useState<LexofficeContact[]>([]);
@@ -217,6 +219,8 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
         lng: lng ?? null,
         paymentMethod,
         notes: notes || null,
+        solarModule: solarModule || null,
+        solarQuantity: solarModule && solarQuantity ? parseInt(solarQuantity, 10) : null,
         deliveryDate: format(deliveryDate, "yyyy-MM-dd"),
         completed: false,
       });
@@ -229,6 +233,8 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
       setLng(undefined);
       setPaymentMethod("paid");
       setNotes("");
+      setSolarModule("");
+      setSolarQuantity("");
       setStreetNumber("");
       setLexQuery("");
       setLexResults([]);
@@ -427,6 +433,52 @@ export function AddStopDialog({ deliveryDate }: AddStopDialogProps) {
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
               />
+            </div>
+            <div className="grid gap-2">
+              <Label>Solarmodule</Label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  data-testid="button-solar-aiko"
+                  onClick={() => setSolarModule(solarModule === "aiko" ? "" : "aiko")}
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    solarModule === "aiko"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  }`}
+                >
+                  <span className={`h-4 w-4 rounded-sm border-2 flex items-center justify-center flex-shrink-0 ${solarModule === "aiko" ? "border-primary bg-primary" : "border-muted-foreground"}`}>
+                    {solarModule === "aiko" && <svg viewBox="0 0 10 8" className="h-2.5 w-2.5 fill-none stroke-white stroke-2"><polyline points="1,4 4,7 9,1"/></svg>}
+                  </span>
+                  Aiko
+                </button>
+                <button
+                  type="button"
+                  data-testid="button-solar-joly"
+                  onClick={() => setSolarModule(solarModule === "joly" ? "" : "joly")}
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    solarModule === "joly"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  }`}
+                >
+                  <span className={`h-4 w-4 rounded-sm border-2 flex items-center justify-center flex-shrink-0 ${solarModule === "joly" ? "border-primary bg-primary" : "border-muted-foreground"}`}>
+                    {solarModule === "joly" && <svg viewBox="0 0 10 8" className="h-2.5 w-2.5 fill-none stroke-white stroke-2"><polyline points="1,4 4,7 9,1"/></svg>}
+                  </span>
+                  Joly
+                </button>
+              </div>
+              {solarModule && (
+                <Input
+                  type="number"
+                  min="1"
+                  data-testid="input-solar-quantity"
+                  value={solarQuantity}
+                  onChange={(e) => setSolarQuantity(e.target.value)}
+                  placeholder="Anzahl"
+                  className="mt-1"
+                />
+              )}
             </div>
             <div className="grid gap-2">
               <Label>Zahlungsart</Label>

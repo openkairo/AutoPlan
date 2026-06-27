@@ -338,6 +338,10 @@ export default function Home() {
       const paymentClass = stop.paymentMethod === 'paid' ? 'badge-paid' : 'badge-cod';
       const notesHtml = stop.notes ? `<div class="notes">&#128221; ${stop.notes}</div>` : '';
       const phoneHtml = stop.phone ? `<div class="detail">&#128222; ${stop.phone}</div>` : '';
+      const solarLabel = stop.solarModule === 'aiko' ? 'Aiko' : stop.solarModule === 'joly' ? 'Joly' : '';
+      const solarHtml = stop.solarModule
+        ? `<div class="solar">&#9728; Solarmodule: <strong>${solarLabel}${stop.solarQuantity ? ' &times; ' + stop.solarQuantity : ''}</strong></div>`
+        : '';
       return `
         <div class="stop">
           <div class="stop-header">
@@ -348,6 +352,7 @@ export default function Home() {
           <div class="stop-body">
             <div class="detail">&#128205; ${stop.address}</div>
             ${phoneHtml}
+            ${solarHtml}
             <div class="stop-footer">
               <span class="badge ${paymentClass}">${paymentLabel}</span>
               ${notesHtml}
@@ -379,6 +384,7 @@ export default function Home() {
     .badge-paid { background: #e6f9ee; color: #166534; border-color: #bbf7d0; }
     .badge-cod { background: #fef9c3; color: #854d0e; border-color: #fde68a; }
     .notes { font-size: 12px; color: #555; }
+    .solar { margin: 3px 0; color: #166534; font-size: 13px; }
     .map-img { width: 100%; max-height: 350px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 14px; display: block; }
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 12px; }
     .qr-box { flex-shrink: 0; text-align: center; border: 1px solid #ccc; border-radius: 6px; padding: 8px; }

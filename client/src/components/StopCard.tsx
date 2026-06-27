@@ -3,7 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Trash2, CheckCircle2, Circle, MapPin, DollarSign, Phone, Pencil, StickyNote } from "lucide-react";
+import { GripVertical, Trash2, CheckCircle2, Circle, MapPin, DollarSign, Phone, Pencil, StickyNote, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EditStopDialog } from "./EditStopDialog";
 import type { Stop } from "@shared/schema";
@@ -65,6 +65,15 @@ export function StopCard({ stop, index, onDelete, onToggleComplete }: StopCardPr
             <div className="flex items-start text-xs text-amber-400/80 mt-0.5" data-testid={`text-notes-${stop.id}`}>
               <StickyNote className="h-3 w-3 mr-1 flex-shrink-0 mt-0.5" />
               <span className="line-clamp-2">{stop.notes}</span>
+            </div>
+          )}
+          {stop.solarModule && (
+            <div className="flex items-center text-xs text-primary mt-0.5" data-testid={`text-solar-${stop.id}`}>
+              <Sun className="h-3 w-3 mr-1 flex-shrink-0" />
+              <span>
+                {stop.solarModule === "aiko" ? "Aiko" : "Joly"}
+                {stop.solarQuantity ? ` × ${stop.solarQuantity}` : ""}
+              </span>
             </div>
           )}
           <div className={cn(
